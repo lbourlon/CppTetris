@@ -5,6 +5,19 @@
 #include "raylib.h"
 #include "grid.inl.h"
 
+char piece_type_to_string(piece_type type){
+    switch (type) {
+        case I: return 'I'; break;
+        case L: return 'L'; break;
+        case J: return 'J'; break;
+        case O: return 'O'; break;
+        case S: return 'S'; break;
+        case T: return 'T'; break;
+        case Z: return 'Z'; break;
+        case MaxPiece: return 'X'; break;
+    }
+}
+
 
 piece::piece(piece_type pt) {
     type = pt;
@@ -39,29 +52,38 @@ void piece::update_position() {
     if (IsKeyPressed('F')) rotate(true);
     if (IsKeyPressed('D')) rotate(false);
 
-    if (current_time - time_last_move  > 0.8){
+    // Default gravity movement
+    if (current_time - time_last_move  > 0.8) {
         is_active = is_sliding ? false : true;
         time_last_move = current_time;
-        // move_cuboids(1, 0);
+        move_cuboids(1, 0);
     }
 
     for (int i = 0; i < 4; i++) {
-        if (piece_cuboids[i].row == ROWS - 1) {
+        int new_r = piece_cuboids[i].row +1;
+        int col = piece_cuboids[i].col;
+        if (new_r == ROWS - 1 || (ColorToInt(piece_debris[new_r][col]) != ColorToInt(BLANK))) {
             is_sliding = true;
         }
     }
 }
 
-
 void piece::move_cuboids(int r, int c) {
+    int new_r, new_c;
+
     for (int i = 0; i < 4; i++) {
-        if (piece_cuboids[i].row + r > ROWS - 1 || piece_cuboids[i].row + r < 0) {
-            return;
-        }
-        if (piece_cuboids[i].col + c > COLS - 1 || piece_cuboids[i].col + c < 0) {
+        new_r = piece_cuboids[i].row + r;
+        new_c = piece_cuboids[i].col + c;
+
+        if (new_r > ROWS - 1 || new_r < 0) return;
+        if (new_c > COLS - 1 || new_c < 0) return;
+
+        // must be done after bounds check above
+        if (ColorToInt(piece_debris[new_r][new_c]) != ColorToInt(BLANK)) {
             return;
         }
     }
+
     for (int i = 0; i < 4; i++) {
         piece_cuboids[i].row += r;
         piece_cuboids[i].col += c;
@@ -84,7 +106,9 @@ void piece::rotate(bool rotate_clockwise) {
     }
     switch (type) {
         case I:
-            pc[1].row = pc[2].row; pc[1].col = pc[2].col;
+            pc[1].row = pc[2].row;
+            pc[1].col = pc[2].col;
+
             switch (rotation){
                 case 0:
                     pc[0].row -= 1; pc[0].col += 2;
@@ -109,29 +133,23 @@ void piece::rotate(bool rotate_clockwise) {
             }
             rotation = (rotation + 1 ) % 4;
             break;
-        case O:
-            break;
         case L:
         case J:
         case S:
         case T:
         case Z:
-            // change to local base
-            // for (int i = 1; i <= 3; i++) {
-            //     int tmp = pc[i].col;
-            //     pc[i].col = -(pc[i].row - pc[0].row) + pc[0].row;
-            //     pc[i].row =  (      tmp - pc[0].col) + pc[0].col;
-            // }
+            // Change base, rotate and change back
             for (int i = 1; i <= 3; i++) {
                 int tmp = pc[i].col;
                 pc[i].col = -(pc[i].row - pc[0].row) + pc[0].col;
                 pc[i].row =  (      tmp - pc[0].col) + pc[0].row;
             }
             break;
-
+        case O:
+        case MaxPiece:
+            break;
     }
 }
-
 
 void piece::setup_cuboids() {
     int r = 4;
@@ -160,7 +178,6 @@ void piece::setup_cuboids() {
             piece_cuboids[2] = {.row = r,     .col = c - 1};
             piece_cuboids[3] = {.row = r - 1, .col = c - 1};
             break;
-
         case O:
             color = YELLOW;
             piece_cuboids[0] = {.row = r,     .col = c};
@@ -168,7 +185,6 @@ void piece::setup_cuboids() {
             piece_cuboids[2] = {.row = r + 1, .col = c};
             piece_cuboids[3] = {.row = r + 1, .col = c + 1};
             break;
-
         case S:
             color = GREEN;
             piece_cuboids[0] = {.row = r,     .col = c};
@@ -176,8 +192,6 @@ void piece::setup_cuboids() {
             piece_cuboids[2] = {.row = r - 1, .col = c};
             piece_cuboids[3] = {.row = r - 1, .col = c + 1};
             break;
-
-
         case Z:
             color = RED;
             c = 4;
@@ -186,7 +200,6 @@ void piece::setup_cuboids() {
             piece_cuboids[2] = {.row = r - 1, .col = c};
             piece_cuboids[3] = {.row = r - 1, .col = c - 1};
             break;
-
         case T:
             c = 4;
             color = PURPLE;
@@ -195,8 +208,6 @@ void piece::setup_cuboids() {
             piece_cuboids[2] = {.row = r,     .col = c - 1};
             piece_cuboids[3] = {.row = r,     .col = c + 1};
             break;
-
-
         default:
           break;
     }

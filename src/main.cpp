@@ -1,34 +1,21 @@
 #include <cstdlib>
 #include <ctime>
-#include <time.h>
 #include <cmath>
 #include <cstdio>
-#include <vector>
 
 #include "piece.h"
 #include "raylib.h"
 #include "rlgl.h"
 // #include "raymath.h"
+#define GRID_H_IMPLEM
 #include "grid.inl.h"
-
-static time_t g_start_time = 0;
-static time_t g_current_time = 0;
 
 int main() {
     init_game_window();
 
-    srand(time(0));
+    SetRandomSeed(0);
 
-    std::vector<piece> pieces;
-    // pieces.push_back(piece(I));
-    // pieces.push_back(piece(L));
-    // pieces.push_back(piece(J));
-    // pieces.push_back(piece(O));
-    // pieces.push_back(piece(S));
-    // pieces.push_back(piece(T));
-    // pieces.push_back(piece(Z));
-
-    piece current_piece = piece(I); // good
+    // piece current_piece = piece(I); // good
     // piece current_piece = piece(L); // good
     // piece current_piece = piece(J); // good
     // piece current_piece = piece(S); // good
@@ -36,27 +23,41 @@ int main() {
     // piece current_piece = piece(T);    // good
     // piece current_piece = piece(O);    // good
 
+    piece_type rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
+    piece *current_piece = new piece(rand_piece_type);
+
+    rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
+    piece *next_piece = new piece(rand_piece_type);
+
     while (!WindowShouldClose()) {
+
+        if (!current_piece->is_active) {
+            rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
+
+            for (int i = 0; i < 4; i++) {
+                piece_debris[current_piece->piece_cuboids[i].row][current_piece->piece_cuboids[i].col] = current_piece->color;
+            }
+
+            delete current_piece;
+            current_piece = next_piece;
+            next_piece = new piece(rand_piece_type);
+        }
+
+        current_piece->update_position();
+
         BeginDrawing();
-
-        // DrawRectangle(grid_to_pix(1), grid_to_pix(2), grid_size, grid_size, RED);
-
-        current_piece.update_position();
-        current_piece.draw();
-
-        // for (auto & element : pieces) {
-        //     // element.update_position();
-        //     element.draw();
-        // }
+        current_piece->draw();
 
         draw_grid();
+        DrawRectangle(8, 8, 250, 94, LIGHTGRAY);
+        DrawText(TextFormat("Score: %i", 4), 10, 10, 20, BLACK);
+        DrawText(TextFormat("Current Piece : %c", piece_type_to_string(current_piece->type)), 10, 30, 20, BLACK);
+        DrawText(TextFormat("Next Piece    : %c", piece_type_to_string(next_piece->type)), 10, 50, 20, BLACK);
 
         ClearBackground(BLACK);
-
         EndDrawing();
     }
 
     CloseWindow();
-
     return 0;
 }
