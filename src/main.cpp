@@ -3,25 +3,19 @@
 #include <cmath>
 #include <cstdio>
 
-#include "piece.h"
-#include "raylib.h"
-#include "rlgl.h"
-// #include "raymath.h"
 #define GRID_H_IMPLEM
 #include "grid.inl.h"
 
+#include "raylib.h"
+#include "rlgl.h"
+#include "piece.h"
+// #include "raymath.h"
+
+static int score = 4;
 int main() {
     init_game_window();
 
-    SetRandomSeed(0);
-
-    // piece current_piece = piece(I); // good
-    // piece current_piece = piece(L); // good
-    // piece current_piece = piece(J); // good
-    // piece current_piece = piece(S); // good
-    // piece current_piece = piece(Z); // good
-    // piece current_piece = piece(T);    // good
-    // piece current_piece = piece(O);    // good
+    // SetRandomSeed(0);
 
     piece_type rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
     piece *current_piece = new piece(rand_piece_type);
@@ -44,17 +38,15 @@ int main() {
         }
 
         current_piece->update_position();
+        score += check_completed_lines();
 
         BeginDrawing();
+        game_board_background();
         current_piece->draw();
-
         draw_grid();
-        DrawRectangle(8, 8, 250, 94, LIGHTGRAY);
-        DrawText(TextFormat("Score: %i", 4), 10, 10, 20, BLACK);
-        DrawText(TextFormat("Current Piece : %c", piece_type_to_string(current_piece->type)), 10, 30, 20, BLACK);
-        DrawText(TextFormat("Next Piece    : %c", piece_type_to_string(next_piece->type)), 10, 50, 20, BLACK);
 
-        ClearBackground(BLACK);
+        draw_info(next_piece->type_as_char(), score);
+        next_piece->draw_in_info();
         EndDrawing();
     }
 

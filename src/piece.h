@@ -7,7 +7,6 @@ typedef enum {
     I, L, J, O, S, T, Z, MaxPiece,
 } piece_type;
 
-char piece_type_to_string(piece_type type);
 
 typedef struct {
     int row;
@@ -18,11 +17,16 @@ class piece
 {
 private:
     int rotation; // 0..=3
+    int initial_row;
+    int initial_col;
+
     bool is_sliding;
     double time_last_move;
 
+    void inline handle_controls(double *fall_multiplier);
     void setup_cuboids();
     void move_cuboids(int r, int c);
+    bool will_collide(grid_pos next_cuboids_pos[4]);
     void rotate(bool rotate_clockwise);
 
 public:
@@ -32,9 +36,12 @@ public:
     grid_pos piece_cuboids[4];
 
     piece(piece_type type);
+
+    char type_as_char();
     void update_position();
     void print();
     void draw();
+    void draw_in_info();
 };
 
 #endif
