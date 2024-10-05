@@ -19,12 +19,12 @@ int main() {
 
     piece_type rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
     piece *current_piece = new piece(rand_piece_type);
+    current_piece->start_lifetime();
 
     rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
     piece *next_piece = new piece(rand_piece_type);
 
     while (!WindowShouldClose()) {
-
         if (!current_piece->is_active) {
             rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
 
@@ -34,6 +34,7 @@ int main() {
 
             delete current_piece;
             current_piece = next_piece;
+            current_piece->start_lifetime();
             next_piece = new piece(rand_piece_type);
         }
 

@@ -37,6 +37,7 @@ public:
 
     piece(piece_type type);
 
+    void start_lifetime();
     char type_as_char();
     void update_position();
     void print();

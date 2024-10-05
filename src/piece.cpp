@@ -1,3 +1,4 @@
+// #define DEBUG
 #include <cstdlib>
 #include <cstring>
 
@@ -25,6 +26,10 @@ piece::piece(piece_type pt) {
     is_active = true;
     is_sliding = false;
     setup_cuboids();
+}
+
+void piece::start_lifetime() {
+    is_active = true;
     double time_last_move = GetTime();
 }
 
@@ -39,26 +44,30 @@ void inline piece::handle_controls(double* fall_multiplier) {
         move_cuboids(0, -1);
     }
 
-    // MOVE DOWN // DEBUG
-    if (IsKeyPressed(KEY_ENTER)) {
-        move_cuboids(1, 0);
-    }
-
+#ifndef DEBUG
     // Soft Drop
     if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_J)) {
         *fall_multiplier = 6.0;
     }
+#else
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_K)) {
+        move_cuboids(1, 0);
+    }
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_J)) {
+        move_cuboids(-1, 0);
+    }
+#endif
 
     // Hard Drop // Good Enough (TM)
     if (IsKeyReleased(KEY_SPACE)) {
         is_active = false;
-        for(int i = 0; i <= ROWS; i++) move_cuboids(1, 0);
+        for(int i = 0; i <= ROWS; i++) move_cuboids(-1, 0);
     }
 
     // rotation horaire
     if (IsKeyPressed(KEY_F) ||
         IsKeyPressed(KEY_X) ||
-        IsKeyPressed(KEY_UP)) {
+        IsKeyPressed(KEY_U)) {
         rotate(true);
     }
 
@@ -81,10 +90,11 @@ void piece::update_position() {
     double fall_multiplier = 1.0;
     handle_controls(&fall_multiplier);
 
+#ifndef DEBUG
     for (int i = 0; i < 4; i++) {
-        int new_r = piece_cuboids[i].row +1;
+        int new_r = piece_cuboids[i].row - 1;
         int col = piece_cuboids[i].col;
-        bool touching_the_floor =  new_r == ROWS - 1;
+        bool touching_the_floor =  new_r == 0;
         bool above_empty_block = ColorToInt(piece_debris[new_r][col]) != ColorToInt(BLANK);
         if (touching_the_floor || above_empty_block) {
             is_sliding = true;
@@ -96,11 +106,14 @@ void piece::update_position() {
 
     if (current_time - time_last_move  > (0.8 / fall_multiplier)) {
         time_last_move = current_time;
-        move_cuboids(1, 0); // Default gravity movement
+        #ifndef DEBUG
+        move_cuboids(-1, 0); // Default gravity movement
+        #endif
         if (is_sliding) {
             is_active = false;
         }
     }
+#endif
 }
 
 bool piece::will_collide(grid_pos *next_cuboids_pos) {
@@ -109,7 +122,7 @@ bool piece::will_collide(grid_pos *next_cuboids_pos) {
         new_r = next_cuboids_pos[i].row;
         new_c = next_cuboids_pos[i].col;
 
-        if (new_r > ROWS - 1 || new_r < 0) return true;
+        if (new_r < 0) return true;
         if (new_c > COLS - 1 || new_c < 0) return true;
 
         if ( ColorToInt(piece_debris[new_r][new_c]) != ColorToInt(BLANK) ) {
@@ -193,8 +206,8 @@ void piece::rotate(bool rotate_clockwise) {
             // Change base, rotate and change back
             for (int i = 1; i <= 3; i++) {
                 int tmp = pc[i].col;
-                temp[i].col = -(pc[i].row - pc[0].row) + pc[0].col;
-                temp[i].row =  (      tmp - pc[0].col) + pc[0].row;
+                temp[i].col =  (pc[i].row - pc[0].row) + pc[0].col;
+                temp[i].row = -(      tmp - pc[0].col) + pc[0].row;
             }
             break;
     }
@@ -211,7 +224,7 @@ void piece::rotate(bool rotate_clockwise) {
 
 void piece::setup_cuboids() {
     initial_col = 4;
-    initial_row = 0;
+    initial_row = 20;
 
     switch (type) {
         case I:
@@ -227,14 +240,14 @@ void piece::setup_cuboids() {
             piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
             piece_cuboids[1] = {.row = initial_row,     .col = initial_col - 1};
             piece_cuboids[2] = {.row = initial_row,     .col = initial_col + 1};
-            piece_cuboids[3] = {.row = initial_row - 1, .col = initial_col + 1};
+            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col + 1};
             break;
         case J:
             color = BLUE;
             piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
             piece_cuboids[1] = {.row = initial_row,     .col = initial_col + 1};
             piece_cuboids[2] = {.row = initial_row,     .col = initial_col - 1};
-            piece_cuboids[3] = {.row = initial_row - 1, .col = initial_col - 1};
+            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col - 1};
             break;
         case O:
             color = YELLOW;
@@ -247,22 +260,22 @@ void piece::setup_cuboids() {
             color = GREEN;
             piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
             piece_cuboids[1] = {.row = initial_row,     .col = initial_col - 1};
-            piece_cuboids[2] = {.row = initial_row - 1, .col = initial_col};
-            piece_cuboids[3] = {.row = initial_row - 1, .col = initial_col + 1};
+            piece_cuboids[2] = {.row = initial_row + 1, .col = initial_col};
+            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col + 1};
             break;
         case Z:
             color = RED;
             initial_col = 4;
             piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
             piece_cuboids[1] = {.row = initial_row,     .col = initial_col + 1};
-            piece_cuboids[2] = {.row = initial_row - 1, .col = initial_col};
-            piece_cuboids[3] = {.row = initial_row - 1, .col = initial_col - 1};
+            piece_cuboids[2] = {.row = initial_row + 1, .col = initial_col};
+            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col - 1};
             break;
         case T:
             initial_col = 4;
             color = PURPLE;
             piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row - 1, .col = initial_col};
+            piece_cuboids[1] = {.row = initial_row + 1, .col = initial_col};
             piece_cuboids[2] = {.row = initial_row,     .col = initial_col - 1};
             piece_cuboids[3] = {.row = initial_row,     .col = initial_col + 1};
             break;

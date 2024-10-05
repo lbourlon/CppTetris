@@ -1,20 +1,18 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include "piece.h"
 #include "raylib.h"
 #include <cstring>
-#include <iostream>
-#include <ostream>
+#include <stdexcept>
+#include <cstdio>
 
-const int ROWS = 20;
+const int ROWS = 22;
 const int COLS = 10;
-const int TOTAL_COORDINATES = ROWS * COLS;
-const int PADDING = 10; // px
 
+const int PADDING = 10; // px
 const int grid_width  = 500; // px
 const int grid_size = static_cast<int>(grid_width / COLS);
-const int grid_height = grid_size * ROWS;
+const int grid_height = grid_size * (ROWS - 3);
 
 constexpr int screen_width  = static_cast<int>(grid_width * 1.5) + (PADDING * 2);
 constexpr int screen_height = static_cast<int>(grid_height * 1.0) + (PADDING * 2);
@@ -29,10 +27,6 @@ extern void init_game_window();
 extern void draw_grid();
 extern void game_board_background();
 
-#include "raylib.h"
-#include <cstdio>
-#include <stdexcept>
-
 constexpr int __col_to_pix(int grid_pos) {
     if ( grid_pos > COLS) {
         printf("Expected grid_pos < %d, instead got grid_pos = %d\n", COLS, grid_pos);
@@ -46,15 +40,17 @@ constexpr int __row_to_pix(int grid_pos) {
         printf("Expected grid_pos < %d, instead got grid_pos = %d\n", ROWS, grid_pos);
         throw std::logic_error("grid_pos must be <= ROWS");
     }
-    return grid_pos * grid_size + PADDING;
+    return (grid_height - (grid_pos + 1) * grid_size) + PADDING;
 }
 
 inline void draw_square_in_grid(int row, int col, Color color){
-    DrawRectangle(__col_to_pix(col), __row_to_pix(row), grid_size, grid_size, color);
+    if (row < ROWS - 3) {
+        DrawRectangle(__col_to_pix(col), __row_to_pix(row), grid_size, grid_size, color);
+    }
 }
 
 inline void draw_grid() {
-    for (int r = 0; r < ROWS; r++){
+    for (int r = 0; r < ROWS - 3; r++){
         for (int c = 0; c < COLS; c++){
             draw_square_in_grid(r, c, piece_debris[r][c]);
             DrawRectangleLines(__col_to_pix(c), __row_to_pix(r), grid_size, grid_size, LIGHTGRAY);
@@ -96,7 +92,7 @@ Color piece_debris[ROWS][COLS] = {0}; // BLANK color being {0, 0, 0, 0}
 // GoodEnough (TM)
 int check_completed_lines(){
     int score = 0;
-    for (int r = ROWS-1; r >= 0; r--) {
+    for ( int r = 0; r < ROWS; r++ ) {
         bool completed_line = true;
 
         for (int c = 0; c < COLS; c++) {
@@ -111,8 +107,8 @@ int check_completed_lines(){
 
         // Clear line and shift down
         memset(&piece_debris[r], 0, sizeof(BLANK) * COLS);
-        for (int l = r; l >= 1; l--) {
-            memmove(piece_debris[l], piece_debris[l-1], sizeof(BLANK) * COLS);
+        for ( int l = r; l < ROWS; l++ ) {
+            memmove(piece_debris[l], piece_debris[l+1], sizeof(BLANK) * COLS);
         }
     }
     return score == 4 ? 10 : score;
