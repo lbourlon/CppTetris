@@ -2,6 +2,8 @@
 #include <ctime>
 #include <cmath>
 #include <cstdio>
+#include <iostream>
+#include <ostream>
 
 #define GRID_H_IMPLEM
 #include "grid.inl.h"
@@ -10,6 +12,7 @@
 #include "rlgl.h"
 #include "piece.h"
 // #include "raymath.h"
+
 
 static int score = 4;
 int main() {
@@ -24,10 +27,13 @@ int main() {
     rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
     piece *next_piece = new piece(rand_piece_type);
 
+    // rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
+    piece *stashed_piece = NULL;
+
     while (!WindowShouldClose()) {
         if (!current_piece->is_active) {
+            std::cout << "Natural next piece" << std::endl;
             rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
-
             for (int i = 0; i < 4; i++) {
                 piece_debris[current_piece->piece_cuboids[i].row][current_piece->piece_cuboids[i].col] = current_piece->color;
             }
@@ -38,6 +44,23 @@ int main() {
             next_piece = new piece(rand_piece_type);
         }
 
+        /* handle_stash_swap */
+        if ( IsKeyPressed(KEY_S) ) {
+            current_piece->stop_lifetime();
+            if (stashed_piece == nullptr) {
+                stashed_piece = current_piece;
+                current_piece = next_piece;
+                next_piece = new piece((piece_type) GetRandomValue(0, MaxPiece - 1));
+            } else {
+                piece* curr_temp_ptr = current_piece;
+                current_piece = stashed_piece;
+                stashed_piece = curr_temp_ptr;
+            }
+            current_piece->setup_extra_cuboids_from_origin(stashed_piece->piece_cuboids[0]);
+            stashed_piece->setup_origin_cuboid();
+            current_piece->start_lifetime();
+        }
+
         current_piece->update_position();
         score += check_completed_lines();
 
@@ -45,9 +68,7 @@ int main() {
         game_board_background();
         current_piece->draw();
         draw_grid();
-
-        draw_info(next_piece->type_as_char(), score);
-        next_piece->draw_in_info();
+        draw_info(next_piece, stashed_piece, score);
         EndDrawing();
     }
 

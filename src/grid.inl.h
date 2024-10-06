@@ -1,6 +1,7 @@
 #ifndef GRID_H
 #define GRID_H
 
+#include "piece.h"
 #include "raylib.h"
 #include <cstring>
 #include <stdexcept>
@@ -60,24 +61,42 @@ inline void draw_grid() {
 }
 
 /*----------------- INFO SIDE PANNEL -----------------*/
-constexpr int __grid_pos_to_pix(int grid_pos) {
-    return grid_pos * grid_size;
+constexpr int __info_col_to_pix(int grid_pos) {
+    return grid_pos * grid_size + sidebar_width_start;
 }
 
-inline void draw_square_in_info(int row, int col, Color color){
-    DrawRectangle(sidebar_width_start + __grid_pos_to_pix(col) + (int) (grid_size / 2 ),
-                  __grid_pos_to_pix(row + 6), grid_size, grid_size, color);
+constexpr int __info_row_to_pix(int grid_pos) {
+    return (grid_height - (grid_pos + 1) * grid_size);
 }
 
-inline void draw_info(char next, int score) {
+const int PIECE_INFO_COL_PIX    = sidebar_width_start;
+const int NEXT_PIECE_ROW_OFFSET = 14;
+const int NEXT_PIECE_ROW_PIX    = __info_row_to_pix(NEXT_PIECE_ROW_OFFSET);
+
+const int STASHED_PIECE_ROW_OFFSET = 9;
+const int STASHED_PIECE_ROW_PIX = __info_row_to_pix(STASHED_PIECE_ROW_OFFSET);
+const int PIECE_INFO_HEIGHT     = grid_size * 3;
+
+inline void draw_square_in_info(int row, int col, Color color, int row_offset, int col_offset) {
+    int rebased_row = (__info_row_to_pix(row) - row_offset) + PIECE_INFO_HEIGHT / 2;
+    int rebased_col = (__info_col_to_pix(col) - col_offset) + sidebar_width / 2;
+    DrawRectangle(rebased_col, rebased_row, grid_size, grid_size, color);
+}
+
+inline void draw_info(piece* next_piece, piece* stashed_piece,int score) {
     int fontsize = 50;
-    DrawText(TextFormat("Score: %i", score), sidebar_width_start, screen_height / 20, fontsize, BLACK);
+    DrawText(TextFormat("Score: \n\n\n%0.8i", score), sidebar_width_start, PADDING, fontsize, BLACK);
 
     fontsize = 30;
-    int next_piece_background_pos = __grid_pos_to_pix(5);
+    DrawText("Next Piece", sidebar_width_start, NEXT_PIECE_ROW_PIX - fontsize, fontsize, BLACK);
+    DrawRectangle(sidebar_width_start, NEXT_PIECE_ROW_PIX, sidebar_width, PIECE_INFO_HEIGHT, BLACK);
+    next_piece->draw_in_info(NEXT_PIECE_ROW_OFFSET);
 
-    DrawText("Next Piece", sidebar_width_start, next_piece_background_pos - fontsize, fontsize, BLACK);
-    DrawRectangle(sidebar_width_start, next_piece_background_pos, sidebar_width, grid_size * 3, BLACK);
+    DrawText("Stashed Piece", sidebar_width_start, STASHED_PIECE_ROW_PIX - fontsize, fontsize, BLACK);
+    DrawRectangle(sidebar_width_start, STASHED_PIECE_ROW_PIX, sidebar_width, PIECE_INFO_HEIGHT, BLACK);
+    if (stashed_piece != nullptr) {
+        stashed_piece->draw_in_info(STASHED_PIECE_ROW_OFFSET);
+    }
 }
 
 /*---------------- NO REDEFINE ZONE ----------------*/

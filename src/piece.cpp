@@ -25,12 +25,17 @@ piece::piece(piece_type pt) {
 
     is_active = true;
     is_sliding = false;
-    setup_cuboids();
+    setup_origin_cuboid();
+}
+
+void piece::stop_lifetime() {
+    rotation = 0;
+    is_active = false;
 }
 
 void piece::start_lifetime() {
     is_active = true;
-    double time_last_move = GetTime();
+    time_last_move = GetTime();
 }
 
 void inline piece::handle_controls(double* fall_multiplier) {
@@ -80,7 +85,6 @@ void inline piece::handle_controls(double* fall_multiplier) {
     }
 }
 
-
 void piece::update_position() {
     double current_time = GetTime();
     if (is_active == false){
@@ -104,7 +108,7 @@ void piece::update_position() {
         }
     }
 
-    if (current_time - time_last_move  > (0.8 / fall_multiplier)) {
+    if (current_time - time_last_move  > (0.5 / fall_multiplier)) {
         time_last_move = current_time;
         #ifndef DEBUG
         move_cuboids(-1, 0); // Default gravity movement
@@ -149,16 +153,24 @@ void piece::draw() {
     }
 }
 
-void piece::draw_in_info() {
-    if ( !is_active) {
-        throw std::logic_error("Can only be called on inactive pieces");
-    }
+void piece::draw_in_info(int global_row_offset) {
+    // if ( !is_active) {
+    //     throw std::logic_error("Can only be called on inactive pieces");
+    // }
+    int row_offset = 0;
+    int col_offset = (int) (grid_size * 2);
+    if ( type == O );
+    else if ( type == I )
+        row_offset = (int) grid_size * 1 / 2;
+    else
+        col_offset = (int) (grid_size * 3 / 2);
+
     for (int i = 0; i < 4; i++) {
-        draw_square_in_info(piece_cuboids[i].row - initial_row,
-                            piece_cuboids[i].col - 3, color);
+        draw_square_in_info(piece_cuboids[i].row - initial_row + global_row_offset,
+                            piece_cuboids[i].col - 3,
+                            color, row_offset, col_offset);
     }
 }
-
 
 void piece::rotate(bool rotate_clockwise) {
     grid_pos *pc = piece_cuboids;
@@ -222,62 +234,65 @@ void piece::rotate(bool rotate_clockwise) {
 
 
 
-void piece::setup_cuboids() {
+void piece::setup_origin_cuboid() {
     initial_col = 4;
+#ifndef DEBUG
     initial_row = 20;
+#else
+    initial_row = 17;
+#endif
+    grid_pos origin = {.row = initial_row, .col = initial_col};
+    setup_extra_cuboids_from_origin(origin);
+}
 
+void piece::setup_extra_cuboids_from_origin(grid_pos origin) {
+    piece_cuboids[0] = origin;
+    int origin_row = origin.row;
+    int origin_col = origin.col;
     switch (type) {
         case I:
-            initial_col = 3;
             color = BLUE;
-            piece_cuboids[0] = {.row = initial_row, .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row, .col = initial_col + 1};
-            piece_cuboids[2] = {.row = initial_row, .col = initial_col + 2};
-            piece_cuboids[3] = {.row = initial_row, .col = initial_col + 3};
+            piece_cuboids[1] = {.row = origin_row, .col = origin_col + 1};
+            piece_cuboids[2] = {.row = origin_row, .col = origin_col + 2};
+            piece_cuboids[3] = {.row = origin_row, .col = origin_col + 3};
             break;
         case L:
             color = ORANGE;
-            piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row,     .col = initial_col - 1};
-            piece_cuboids[2] = {.row = initial_row,     .col = initial_col + 1};
-            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col + 1};
+            piece_cuboids[1] = {.row = origin_row,     .col = origin_col - 1};
+            piece_cuboids[2] = {.row = origin_row,     .col = origin_col + 1};
+            piece_cuboids[3] = {.row = origin_row + 1, .col = origin_col + 1};
             break;
         case J:
             color = BLUE;
-            piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row,     .col = initial_col + 1};
-            piece_cuboids[2] = {.row = initial_row,     .col = initial_col - 1};
-            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col - 1};
+            piece_cuboids[1] = {.row = origin_row,     .col = origin_col + 1};
+            piece_cuboids[2] = {.row = origin_row,     .col = origin_col - 1};
+            piece_cuboids[3] = {.row = origin_row + 1, .col = origin_col - 1};
             break;
         case O:
             color = YELLOW;
-            piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row,     .col = initial_col + 1};
-            piece_cuboids[2] = {.row = initial_row + 1, .col = initial_col};
-            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col + 1};
+            piece_cuboids[1] = {.row = origin_row,     .col = origin_col + 1};
+            piece_cuboids[2] = {.row = origin_row + 1, .col = origin_col};
+            piece_cuboids[3] = {.row = origin_row + 1, .col = origin_col + 1};
             break;
         case S:
             color = GREEN;
-            piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row,     .col = initial_col - 1};
-            piece_cuboids[2] = {.row = initial_row + 1, .col = initial_col};
-            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col + 1};
+            piece_cuboids[1] = {.row = origin_row,     .col = origin_col - 1};
+            piece_cuboids[2] = {.row = origin_row + 1, .col = origin_col};
+            piece_cuboids[3] = {.row = origin_row + 1, .col = origin_col + 1};
             break;
         case Z:
             color = RED;
-            initial_col = 4;
-            piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row,     .col = initial_col + 1};
-            piece_cuboids[2] = {.row = initial_row + 1, .col = initial_col};
-            piece_cuboids[3] = {.row = initial_row + 1, .col = initial_col - 1};
+            origin_col = 4;
+            piece_cuboids[1] = {.row = origin_row,     .col = origin_col + 1};
+            piece_cuboids[2] = {.row = origin_row + 1, .col = origin_col};
+            piece_cuboids[3] = {.row = origin_row + 1, .col = origin_col - 1};
             break;
         case T:
-            initial_col = 4;
+            origin_col = 4;
             color = PURPLE;
-            piece_cuboids[0] = {.row = initial_row,     .col = initial_col};
-            piece_cuboids[1] = {.row = initial_row + 1, .col = initial_col};
-            piece_cuboids[2] = {.row = initial_row,     .col = initial_col - 1};
-            piece_cuboids[3] = {.row = initial_row,     .col = initial_col + 1};
+            piece_cuboids[1] = {.row = origin_row + 1, .col = origin_col};
+            piece_cuboids[2] = {.row = origin_row,     .col = origin_col - 1};
+            piece_cuboids[3] = {.row = origin_row,     .col = origin_col + 1};
             break;
         default:
           break;

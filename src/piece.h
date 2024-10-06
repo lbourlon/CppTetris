@@ -24,7 +24,6 @@ private:
     double time_last_move;
 
     void inline handle_controls(double *fall_multiplier);
-    void setup_cuboids();
     void move_cuboids(int r, int c);
     bool will_collide(grid_pos next_cuboids_pos[4]);
     void rotate(bool rotate_clockwise);
@@ -37,12 +36,15 @@ public:
 
     piece(piece_type type);
 
+    void setup_origin_cuboid();
+    void setup_extra_cuboids_from_origin(grid_pos origin);
     void start_lifetime();
+    void stop_lifetime();
     char type_as_char();
     void update_position();
     void print();
     void draw();
-    void draw_in_info();
+    void draw_in_info(int global_row_offset);
 };
 
 #endif
