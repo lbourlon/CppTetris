@@ -36,7 +36,7 @@ public:
 
     piece(piece_type type);
 
-    void setup_origin_cuboid();
+    void setup_cuboids();
     void setup_extra_cuboids_from_origin(grid_pos origin);
     void start_lifetime();
     void stop_lifetime();
@@ -44,7 +44,7 @@ public:
     void update_position();
     void print();
     void draw();
-    void swap_properties(piece* other_piece);
+    bool swap_properties(piece* other_piece);
     void draw_in_info(int global_row_offset);
 };
 

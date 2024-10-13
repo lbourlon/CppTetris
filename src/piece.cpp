@@ -1,4 +1,4 @@
-#define DEBUG
+// #define DEBUG
 #include <cstdlib>
 #include <cstring>
 
@@ -25,7 +25,7 @@ piece::piece(piece_type pt) {
 
     is_active = true;
     is_sliding = false;
-    setup_origin_cuboid();
+    setup_cuboids();
 }
 
 void piece::stop_lifetime() {
@@ -236,22 +236,31 @@ void piece::rotate(bool rotate_clockwise) {
 }
 
 
-void piece::swap_properties(piece* other_piece) {
-    other_piece->stop_lifetime();
+bool piece::swap_properties(piece* other_piece) {
+    grid_pos backup[4] = {0};
+    memcpy(backup, other_piece->piece_cuboids, sizeof(piece_cuboids));
 
     /* Take position from stashed piece */
     piece_cuboids[0].col = other_piece->piece_cuboids[0].col;
     piece_cuboids[0].row = other_piece->piece_cuboids[0].row;
     setup_extra_cuboids_from_origin(piece_cuboids[0]);
 
+    if ( will_collide(piece_cuboids) ) {
+        memcpy(piece_cuboids, backup, sizeof(piece_cuboids));
+        return false;
+    }
+
+    other_piece->stop_lifetime();
+
     /* Set position of stashed piece to zero */
     /* This is done so that it's properly displayed in the sidebar */
-    other_piece->setup_origin_cuboid();
+    other_piece->setup_cuboids();
     time_last_move = other_piece->time_last_move;
     is_active = true;
+    return true;
 }
 
-void piece::setup_origin_cuboid() {
+void piece::setup_cuboids() {
     initial_col = type != I ? 4 : 3;
 #ifndef DEBUG
     initial_row = 20;

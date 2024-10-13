@@ -45,16 +45,22 @@ int main() {
 
         /* handle_stash_swap */
         if ( IsKeyPressed(KEY_S) ) {
+            piece* temp = current_piece;
             if (stashed_piece == nullptr) {
                 stashed_piece = current_piece;
                 current_piece = next_piece;
                 next_piece = new piece((piece_type) GetRandomValue(0, MaxPiece - 1));
             } else {
-                piece* curr_temp_ptr = current_piece;
                 current_piece = stashed_piece;
-                stashed_piece = curr_temp_ptr;
+                stashed_piece = temp;
             }
-            current_piece->swap_properties(stashed_piece);
+
+            if (!current_piece->swap_properties(stashed_piece)) {
+                temp = current_piece;
+                current_piece = stashed_piece;
+                stashed_piece = temp;
+                stashed_piece->setup_cuboids();
+            }
         }
 
         current_piece->update_position();
