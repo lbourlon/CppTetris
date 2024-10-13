@@ -17,7 +17,6 @@
 static int score = 4;
 int main() {
     init_game_window();
-
     // SetRandomSeed(0);
 
     piece_type rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
@@ -31,8 +30,8 @@ int main() {
     piece *stashed_piece = NULL;
 
     while (!WindowShouldClose()) {
+        /* Handle new piece and cleanup of old */
         if (!current_piece->is_active) {
-            std::cout << "Natural next piece" << std::endl;
             rand_piece_type = (piece_type) GetRandomValue(0, MaxPiece - 1);
             for (int i = 0; i < 4; i++) {
                 piece_debris[current_piece->piece_cuboids[i].row][current_piece->piece_cuboids[i].col] = current_piece->color;
@@ -46,7 +45,6 @@ int main() {
 
         /* handle_stash_swap */
         if ( IsKeyPressed(KEY_S) ) {
-            current_piece->stop_lifetime();
             if (stashed_piece == nullptr) {
                 stashed_piece = current_piece;
                 current_piece = next_piece;
@@ -56,9 +54,7 @@ int main() {
                 current_piece = stashed_piece;
                 stashed_piece = curr_temp_ptr;
             }
-            current_piece->setup_extra_cuboids_from_origin(stashed_piece->piece_cuboids[0]);
-            stashed_piece->setup_origin_cuboid();
-            current_piece->start_lifetime();
+            current_piece->swap_properties(stashed_piece);
         }
 
         current_piece->update_position();

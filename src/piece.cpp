@@ -1,4 +1,4 @@
-// #define DEBUG
+#define DEBUG
 #include <cstdlib>
 #include <cstring>
 
@@ -29,14 +29,17 @@ piece::piece(piece_type pt) {
 }
 
 void piece::stop_lifetime() {
-    rotation = 0;
+    rotation = 0; // fixes issues with I piece when swap
     is_active = false;
 }
+
 
 void piece::start_lifetime() {
     is_active = true;
     time_last_move = GetTime();
 }
+
+//void piece::replace_with(piece* other_piece) { }
 
 void inline piece::handle_controls(double* fall_multiplier) {
     // MOVE RIGHT
@@ -233,9 +236,23 @@ void piece::rotate(bool rotate_clockwise) {
 }
 
 
+void piece::swap_properties(piece* other_piece) {
+    other_piece->stop_lifetime();
+
+    /* Take position from stashed piece */
+    piece_cuboids[0].col = other_piece->piece_cuboids[0].col;
+    piece_cuboids[0].row = other_piece->piece_cuboids[0].row;
+    setup_extra_cuboids_from_origin(piece_cuboids[0]);
+
+    /* Set position of stashed piece to zero */
+    /* This is done so that it's properly displayed in the sidebar */
+    other_piece->setup_origin_cuboid();
+    time_last_move = other_piece->time_last_move;
+    is_active = true;
+}
 
 void piece::setup_origin_cuboid() {
-    initial_col = 4;
+    initial_col = type != I ? 4 : 3;
 #ifndef DEBUG
     initial_row = 20;
 #else
@@ -282,13 +299,11 @@ void piece::setup_extra_cuboids_from_origin(grid_pos origin) {
             break;
         case Z:
             color = RED;
-            origin_col = 4;
             piece_cuboids[1] = {.row = origin_row,     .col = origin_col + 1};
             piece_cuboids[2] = {.row = origin_row + 1, .col = origin_col};
             piece_cuboids[3] = {.row = origin_row + 1, .col = origin_col - 1};
             break;
         case T:
-            origin_col = 4;
             color = PURPLE;
             piece_cuboids[1] = {.row = origin_row + 1, .col = origin_col};
             piece_cuboids[2] = {.row = origin_row,     .col = origin_col - 1};

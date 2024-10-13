@@ -21,7 +21,6 @@ private:
     int initial_col;
 
     bool is_sliding;
-    double time_last_move;
 
     void inline handle_controls(double *fall_multiplier);
     void move_cuboids(int r, int c);
@@ -32,6 +31,7 @@ public:
     Color color;
     piece_type type;
     bool is_active;
+    double time_last_move;
     grid_pos piece_cuboids[4];
 
     piece(piece_type type);
@@ -44,6 +44,7 @@ public:
     void update_position();
     void print();
     void draw();
+    void swap_properties(piece* other_piece);
     void draw_in_info(int global_row_offset);
 };
 
